@@ -64,3 +64,6 @@ logs/
 # ─── Config with secrets (use config.py for paths, never commit credentials) ─
 secrets.py
 .env.local
+
+# ─── Claude Code ─────────────────────────────────────────────────────────────
+.claude/
