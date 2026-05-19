@@ -1,0 +1,11 @@
+# Photoelectric effect experiment on sodium (Na)
+# frequency_Hz: frequency of incident light
+# stopping_voltage_V: voltage required to stop the emitted photoelectrons
+frequency_Hz,stopping_voltage_V
+5.50e14,0.02
+6.00e14,0.19
+6.50e14,0.43
+7.00e14,0.60
+7.50e14,0.85
+8.00e14,1.01
+8.50e14,1.25

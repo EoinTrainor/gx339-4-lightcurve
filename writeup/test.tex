@@ -1,0 +1,241 @@
+\documentclass[12pt,a4paper]{article}
+
+% --- Packages ---
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{siunitx}
+
+% --- Title ---
+\title{Near-Infrared Photometry of GX~339-4:\\
+       {\small A ZOGY Difference Imaging Pipeline}}
+\author{Eoin Trainor \\ University College Cork}
+\date{\today}
+
+% ============================================================
+\begin{document}
+\maketitle
+
+% --- Abstract -----------------------------------------------
+\begin{abstract}
+We present a Ks-band differential photometry pipeline for the black hole
+low-mass X-ray binary GX~339-4, using 234 frames across nine observing
+blocks obtained with HAWK-I at the ESO VLT over a 67-day baseline in
+2025.  ZOGY proper image subtraction isolates the time-variable flux of
+the donor star from contaminating field sources in this crowded field.
+After per-OB detrending to remove slow accretion variability, the
+phase-folded lightcurve shows no significant ellipsoidal modulation above
+the frame-to-frame scatter, suggesting the system was in an active or
+semi-active state during the campaign.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{Introduction}
+\label{sec:intro}
+
+GX~339-4 is one of the most frequently studied black hole low-mass
+X-ray binaries (LMXBs) \cite{Markert1973}.  Despite decades of
+observation the black hole mass remains poorly constrained, largely
+because the system spends much of its time in an active or
+semi-active state rather than in the deep quiescence required for
+ellipsoidal modelling.
+
+The near-infrared (NIR) Ks band ($\lambda \approx 2.15\,\mu$m) is
+preferred for ellipsoidal modelling because the donor star's
+thermal emission dominates over the accretion disc contribution
+during quiescence.  The ellipsoidal light curve — arising from the
+tidal distortion of the Roche-lobe-filling donor — exhibits two
+equal maxima per orbit at quadrature ($\phi = 0.25, 0.75$) and two
+minima at conjunction ($\phi = 0.0, 0.5$), and its amplitude
+constrains the binary mass ratio and inclination.
+
+The crowded nature of the GX~339-4 field makes conventional aperture
+photometry unreliable; ZOGY proper image subtraction
+\cite{Zackay2016} removes the contribution of blended field stars
+while preserving the photometric noise properties of the difference
+image, providing a cleaner measurement of differential flux.
+
+% ============================================================
+\section{Observations}
+\label{sec:obs}
+
+\subsection{Instrument}
+
+Observations were obtained with HAWK-I at the VLT UT4.  HAWK-I
+consists of four Hawaii-2RG detectors arranged in a $2 \times 2$
+mosaic with a $15''$ cross-shaped gap, giving a total field of view
+of $7.5' \times 7.5'$ and a plate scale of $0.106''$/pixel.
+GX~339-4 falls on chip\,1 (bottom-left detector).  All data were
+taken in the Ks filter with a science DIT of 10\,s and NDIT~=~9,
+yielding a per-frame exposure time of 90\,s after jitter-pattern
+co-addition.
+
+\subsection{Observing Log}
+
+Nine observing blocks (OBs) were obtained between 2025 May 17 and
+2025 July 23, spanning a baseline of 66.8\,days ($\approx 38$ orbital
+periods).  Each OB comprised 26--28 jitter frames, for a total of
+236 science frames.  Two frames were rejected after per-OB sigma
+clipping (one each in OB\,2 and OB\,8), leaving 234 frames in the
+final lightcurve.  Table~\ref{tab:obs} summarises each OB.  The
+mean seeing over the campaign was $0.71''$ (FWHM), ranging from
+$0.42''$ to $1.03''$.
+
+\begin{table}[h]
+  \centering
+  \caption{Summary of observing blocks.  FWHM is the mean PSF width
+           of the science frames for that OB measured in the ZOGY
+           pipeline.}
+  \label{tab:obs}
+  \begin{tabular}{lcccc}
+    \toprule
+    OB & Date (UT) & Frames & Good & Mean FWHM ($''$) \\
+    \midrule
+    OB~1 & 2025-05-17 & 26 & 26 & 0.85 \\
+    OB~2 & 2025-06-02 & 26 & 25 & 0.82 \\
+    OB~3 & 2025-06-04 & 26 & 26 & 0.55 \\
+    OB~4 & 2025-06-19 & 26 & 26 & 0.76 \\
+    OB~5 & 2025-07-03 & 26 & 26 & 0.70 \\
+    OB~6 & 2025-07-14 & 26 & 26 & 0.75 \\
+    OB~7 & 2025-07-18 & 26 & 26 & 0.61 \\
+    OB~8 & 2025-07-20 & 26 & 25 & 0.83 \\
+    OB~9 & 2025-07-23 & 28 & 28 & 0.55 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ============================================================
+\section{Method: ZOGY Subtraction}
+\label{sec:zogy}
+
+\subsection{Calibration and Alignment}
+
+Raw science frames were dark-subtracted using a master dark scaled
+to the science DIT, flat-fielded with a Ks master flat, and
+bad-pixel corrected.  Frames within each OB were aligned to a common
+reference astrometric grid using SExtractor source catalogues and an
+affine transformation, then stacked to form a per-OB co-add used
+for constructing the ZOGY reference.
+
+\subsection{ZOGY Difference Imaging}
+
+The ZOGY proper difference image $\hat{D}$ is given by
+\cite{Zackay2016}:
+
+\begin{equation}
+  \hat{D} = \frac{F_r\,\hat{P}_r\,\hat{N} - F_n\,\hat{P}_n\,\hat{R}}
+                 {\sqrt{F_r^2\,\sigma_n^2\,|\hat{P}_r|^2 +
+                        F_n^2\,\sigma_r^2\,|\hat{P}_n|^2}}
+  \label{eq:D}
+\end{equation}
+
+where $R$ and $N$ are the reference and science images, $P_r$,
+$P_n$ their PSFs, $\sigma_r$, $\sigma_n$ their background RMS
+values, and $F_r$, $F_n$ their photometric flux normalisations.
+PSFs were modelled as circular Gaussians fitted from bright
+isolated stars in each frame.
+
+The matched-filter detection statistic $S$ is computed from
+$\hat{D}$ by convolving with the science PSF; its value at the
+target position provides a SNR-optimal estimate of the differential
+flux per frame.
+
+\subsection{Differential Photometry}
+
+For each science frame, $S_\mathrm{target}$ was extracted at the
+centroid of GX~339-4 and $S_\mathrm{ref,i}$ at the positions of
+eight non-variable reference stars spanning Ks\,$= 14$--$17$\,mag.
+Frames were sigma-clipped per OB at $3\sigma$ to remove cosmic-ray
+hits and tracking failures.  A per-OB mean was then subtracted from
+$S_\mathrm{target}$ to remove OB-to-OB flux offsets caused by
+accretion variability and photometric zero-point drift.  The
+detrended signal was normalised by its global standard deviation.
+Each OB spans $\approx 52$\,min, which is much less than the
+$P = 1.7587$\,d orbital period, so the intra-OB ellipsoidal slope
+is negligible and this detrending does not suppress the ellipsoidal
+signal.
+
+% ============================================================
+\section{Results}
+\label{sec:results}
+
+Figure~\ref{fig:lc} shows the phase-folded differential lightcurve
+of GX~339-4, folded on the Heida+2017 ephemeris
+($T_0 = 57529.397$\,MJD, $P = 1.7587$\,d).  The 234 good frames
+are distributed over orbital phases $\phi \approx 0.28$--$0.94$;
+the region around inferior conjunction ($\phi \approx 0$) was not
+sampled during this campaign.
+
+The binned means (20 phase bins, minimum 3 points per bin) are
+consistent with zero within their uncertainties across all sampled
+phases.  No significant ellipsoidal modulation is detected: the
+expected double-humped signal with maxima at quadrature and minima
+at conjunction ($\Delta m \sim 0.1$--$0.2$\,mag in quiescence) is
+not present above the frame-to-frame scatter.  The scatter in
+individual $S_\mathrm{target}$ values is dominated by the large
+OB-to-OB flux offset (raw $\sigma \approx 8 \times 10^8$ matched-filter
+units), consistent with the system being in a variable
+semi-active state rather than deep quiescence during the 2025
+campaign.  The eight reference stars show comparable scatter in $S$,
+confirming that the differential noise is driven by PSF-matching
+systematics and residual sky variability rather than astrophysical
+variability in GX~339-4 alone.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/difference/lightcurve/lc05_phase_folded_paper.png}
+  \caption{Phase-folded Ks-band differential lightcurve of GX~339-4
+           on the Heida+2017 ephemeris ($P = 1.7587$\,d,
+           $T_0 = 57529.397$\,MJD).  Individual frames are shown as
+           coloured points (one colour per OB); black points with
+           error bars are the binned mean $\pm$ standard error in 20
+           equal phase bins.  Blue dotted lines mark inferior and
+           superior conjunction ($\phi = 0, 0.5$); red dotted lines
+           mark quadrature ($\phi = 0.25, 0.75$).}
+  \label{fig:lc}
+\end{figure}
+
+% ============================================================
+\section{Conclusions}
+\label{sec:conclusions}
+
+We have demonstrated a Ks-band ZOGY difference imaging pipeline for
+GX~339-4 using nine HAWK-I observing blocks spanning 67\,days in
+2025.  The pipeline reliably extracts per-frame differential
+photometry from a crowded NIR field, with a mean seeing of
+$0.71''$ and 234 frames surviving quality cuts.
+
+No significant ellipsoidal modulation is detected in the
+phase-folded lightcurve.  The dominant signal is OB-to-OB flux
+variability at the $\sim 10^8$--$10^9$ matched-filter unit level,
+consistent with the system remaining in an active or semi-active
+accretion state throughout the campaign.  Additionally, the orbital
+phase coverage does not include the inferior conjunction region
+($\phi \lesssim 0.28$), which is required for a complete ellipsoidal
+fit.
+
+Future work should target GX~339-4 during a confirmed X-ray
+quiescent epoch and obtain full orbital phase coverage, ideally
+with OBs distributed to sample all phases including conjunction.
+With the pipeline validated here, such a dataset could yield a
+robust ellipsoidal solution and place new constraints on the binary
+inclination and mass ratio.
+
+% ============================================================
+\begin{thebibliography}{9}
+
+\bibitem{Markert1973}
+  Markert T.~H. et al., 1973, ApJ, 184, L67.
+
+\bibitem{Zackay2016}
+  Zackay B., Ofek E.~O., Gal-Yam A., 2016, ApJ, 830, 27.
+
+\end{thebibliography}
+
+\end{document}

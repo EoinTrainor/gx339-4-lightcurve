@@ -1,0 +1,508 @@
+% ============================================================
+% GX 339-4 HAWK-I Reduction — Overleaf writeup
+% Paste this file into Overleaf and upload the figures listed
+% in each \includegraphics command.
+% ============================================================
+
+\documentclass[12pt,a4paper]{article}
+
+% --- Packages -----------------------------------------------
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{lineno}
+\usepackage{setspace}
+\onehalfspacing
+
+% --- Title --------------------------------------------------
+\title{Near-Infrared Differential Photometry of GX~339-4:\\
+       HAWK-I Ks-Band Reduction and ZOGY Difference Imaging}
+\author{Eoin Trainor\\
+        \small Research Masters, University College Cork\\
+        \small Supervisor: Dr.\ Mark Kennedy}
+\date{\today}
+
+% ============================================================
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{Introduction}
+\label{sec:intro}
+% ============================================================
+
+GX~339-4 is one of the most frequently studied black hole low-mass X-ray
+binaries (LMXBs), having undergone numerous outburst--quiescence cycles since
+its discovery \citep{Markert1973}. Despite decades of observation, the mass of
+the central black hole remains poorly constrained, largely because the system
+spends much of its time in an active or semi-active state that contaminates the
+donor star's photometric signal with accretion disc and jet emission.
+
+The most model-independent route to the black hole mass is the binary mass
+function, derived from the radial velocity curve and the orbital inclination.
+The inclination can be constrained by fitting the ellipsoidal modulation of the
+donor star's near-infrared (NIR) lightcurve with a Roche-lobe geometry model
+such as \textsc{icarus} \citep{Breton2012}. In the NIR Ks band ($\lambda
+\approx 2.15\,\mu$m), the donor star's thermal emission dominates over the
+accretion disc during quiescence, making this the preferred bandpass for such
+studies.
+
+Two field stars in close angular proximity to GX~339-4 complicate
+straightforward aperture photometry of the target. We therefore adopt
+\textbf{ZOGY proper image subtraction} \citep{Zackay2016} to isolate the
+time-variable flux of GX~339-4 from its non-variable neighbours.
+
+This document describes the full data reduction pipeline applied to 12
+observing blocks (OBs) of HAWK-I Ks-band imaging acquired at the ESO Very
+Large Telescope (VLT), covering the calibration, alignment, difference imaging,
+and lightcurve extraction stages.
+
+% ============================================================
+\section{Observations}
+\label{sec:obs}
+% ============================================================
+
+\subsection{Instrument and Setup}
+
+Observations were obtained with HAWK-I (High Acuity Wide field K-band Imager)
+mounted at the Nasmyth A focus of VLT UT4 (Yepun). HAWK-I employs four
+Hawaii-2RG $2048 \times 2048$ pixel detectors arranged in a $2 \times 2$
+mosaic with a total field of view of $7.5' \times 7.5'$ and a plate scale of
+$0.106''$/pixel. GX~339-4 was imaged on the bottom-left chip (Detector 1) in
+all observing blocks.
+
+All science observations used the Ks broadband filter ($\lambda_c =
+2.146\,\mu$m, $\Delta\lambda = 0.325\,\mu$m), with an integration time of
+DIT~$= 10$\,s and NDIT~$= 9$ co-added sub-exposures per saved frame, giving
+an effective on-sky time of 90\,s per FITS file.
+
+\subsection{Observing Log}
+
+Twelve observing blocks were executed between 2025 May 17 and 2025 September 20,
+yielding 317 raw science frames. Table~\ref{tab:obs_log} summarises the
+campaign.
+
+\begin{table}[H]
+\centering
+\caption{Observing log. OBs~11--12 are excluded from all analysis
+(confirmed outburst; see Section~\ref{sec:data_selection}).}
+\label{tab:obs_log}
+\begin{tabular}{lccrl}
+\toprule
+OB & Date (UT) & Frames & Exp.\ (s) & Notes \\
+\midrule
+GX339\_Ks\_1  & 2025-05-17 & 26 & 2340 & \\
+GX339\_Ks\_2  & 2025-06-02 & 26 & 2340 & \\
+GX339\_Ks\_3  & 2025-06-04 & 26 & 2340 & \\
+GX339\_Ks\_4  & 2025-06-19 & 26 & 2340 & \\
+GX339\_Ks\_5  & 2025-07-03 & 26 & 2340 & \\
+GX339\_Ks\_6  & 2025-07-14 & 26 & 2340 & \\
+GX339\_Ks\_7  & 2025-07-18 & 26 & 2340 & \\
+GX339\_Ks\_8  & 2025-07-20 & 26 & 2340 & \\
+GX339\_Ks\_9  & 2025-07-23 & 31 & 2790 & OB interrupted; split into two ESO ADPs \\
+GX339\_Ks\_10 & 2025-08-15 & 26 & 2340 & Suspected non-quiescent \\
+GX339\_Ks\_11 & 2025-09-20 & 26 & 2340 & Outburst (Swift/BAT confirmed) \\
+GX339\_Ks\_12 & 2025-08-30 & 26 & 2340 & Outburst (Swift/BAT confirmed) \\
+\midrule
+Total & & 317 & $\sim$28530 & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Calibration Frames}
+
+A total of 240 dark frames (EXPTIME~$= 10$\,s, NDIT~$= 9$) and 234 Ks-band
+sky flat frames were obtained. Flat frames were split into two DIT groups
+($1.68$\,s and $3.5$\,s); the DIT~$= 1.68$\,s group was selected for master
+flat construction on the basis of higher signal-to-noise.
+
+\subsection{Data Selection}
+\label{sec:data_selection}
+
+OBs~11 and 12 were obtained during a confirmed outburst episode, identified by
+cross-matching the OB epochs against the Swift/BAT hard X-ray (15--50\,keV)
+long-term light curve. These two OBs are excluded from all reduction and
+analysis steps. OB~10 was provisionally retained as science frames but excluded
+from the ZOGY reference coadd on suspicion of non-quiescent behaviour. The
+final analysis therefore uses OBs~1--9 ($N = 236$ frames after alignment
+quality cuts).
+
+% ============================================================
+\section{Data Reduction Pipeline}
+\label{sec:reduction}
+% ============================================================
+
+\subsection{Master Dark and Bad Pixel Mask}
+
+A master dark frame was constructed by median-combining all 240 dark frames
+after sigma-clipped outlier rejection ($3\sigma$, 5 iterations). A bad pixel
+mask was derived from pixels exceeding $8\sigma$ above the master dark RMS map,
+and was applied in all subsequent calibration steps.
+
+\subsection{Master Flat Field}
+
+The 58 DIT~$= 1.68$\,s sky flat frames were median-combined and normalised to
+unit median, producing a master Ks-band flat field. Pixels deviating by more
+than 50\% from the median were flagged and added to the bad pixel mask.
+
+\subsection{Science Frame Calibration}
+
+All 317 science frames were processed as follows:
+\begin{enumerate}
+  \item Dark subtraction using the master dark (scaled to DIT if required).
+  \item Flat-field division using the master flat.
+  \item Sky background subtraction: the sky level was estimated from the
+        sigma-clipped median of each frame and subtracted, yielding
+        sky-subtracted, calibrated frames with a median sky residual $< 1$\,ADU.
+\end{enumerate}
+
+\subsection{Astrometric Alignment}
+
+All 317 calibrated frames were aligned to a common pixel grid using
+\texttt{astroalign} \citep{Beroiz2020}, which matches star triangles between
+frames without requiring a WCS solution. A total of 314/317 frames were
+successfully aligned (3 frames rejected due to insufficient stars or excessive
+distortion). The aligned pixel scale is $0.106''$/px throughout.
+
+% ============================================================
+\section{ZOGY Proper Image Subtraction}
+\label{sec:zogy}
+% ============================================================
+
+\subsection{Method}
+
+We implemented the ZOGY algorithm of \citet{Zackay2016} for optimal image
+subtraction in the Fourier domain. ZOGY produces a \emph{proper difference
+image} $D$ that is statistically optimal in the sense that its noise properties
+are spatially uniform and its pixels are uncorrelated, unlike classical
+image-subtraction methods. The key equations are:
+
+\begin{equation}
+\hat{D} = \frac{F_r\,\hat{P}_r\,\hat{N} - F_n\,\hat{P}_n\,\hat{R}}
+               {\sqrt{F_r^2\,\sigma_n^2\,|\hat{P}_r|^2 +
+                      F_n^2\,\sigma_r^2\,|\hat{P}_n|^2}}
+\label{eq:D}
+\end{equation}
+
+\begin{equation}
+\hat{P}_D = \frac{F_r\,F_n\,\hat{P}_r\,\hat{P}_n}{F_D\,\hat{D}_{\rm denom}}
+\label{eq:PD}
+\end{equation}
+
+\begin{equation}
+F_D = \frac{F_r\,F_n}{\sqrt{F_r^2\,\sigma_n^2 + F_n^2\,\sigma_r^2}}
+\label{eq:FD}
+\end{equation}
+
+where $\hat{X}$ denotes the discrete Fourier transform of $X$; $R$ and $N$ are
+the reference and new (science) images respectively; $P_r$, $P_n$ are their
+PSFs; $\sigma_r$, $\sigma_n$ are their background RMS values; and $F_r$, $F_n$
+are their photometric flux normalisations.
+
+The matched-filter detection statistic $S$ (Equation~17 of \citealt{Zackay2016}),
+which gives the optimal signal-to-noise estimator for a point source, is:
+
+\begin{equation}
+\hat{S} = F_D\,\hat{P}_D^*\,\hat{D}
+\label{eq:S}
+\end{equation}
+
+The differential flux of a variable point source at position $(x_0, y_0)$ is
+recovered as $\Delta f = S(x_0,\,y_0)\,/\,F_D$.
+
+\subsection{Reference Image Construction}
+
+The coadded reference image $R$ was built from all 236 aligned frames from
+OBs~1--9, using the inverse-variance weighted coaddition scheme of
+\citet{ZackayOfek2015}:
+
+\begin{equation}
+R = \frac{\sum_j w_j\,I_j}{\sum_j w_j}, \qquad w_j = \frac{F_j}{\sigma_j^2}
+\end{equation}
+
+where $F_j$ and $\sigma_j$ are the photometric flux normalisation and
+background RMS of the $j$-th frame, estimated per-frame via 2MASS Ks-band
+catalogue matching with annular sky subtraction. The resulting reference image
+is shown in Figure~\ref{fig:reference}.
+
+\begin{figure}[H]
+  \centering
+  % Upload: fig1_reference_image.png from report_figures/
+  \includegraphics[width=\textwidth]{fig1_reference_image.png}
+  \caption{Coadded ZOGY reference image $R$ (236 frames, Ks band). Left:
+           full $2048\times2048$ detector field with GX~339-4 marked (red
+           circle). Right: $\pm80$\,px zoom on GX~339-4. Two contaminating
+           field stars are visible in close proximity to the target.}
+  \label{fig:reference}
+\end{figure}
+
+\subsection{Per-Frame PSF Modelling}
+
+For each science frame the empirical PSF was estimated by:
+\begin{enumerate}
+  \item Source extraction with \textsc{sep} \citep{Barbary2016} at a
+        $5\sigma$ detection threshold.
+  \item Cross-matching detected sources with the 2MASS Ks catalogue
+        \citep{Skrutskie2006} within a $7'$ search radius, retaining stars
+        with $9.5 \leq K_s \leq 14.5$\,mag.
+  \item Selecting up to 30 isolated, unsaturated stars (neighbour separation
+        $> 6 \times$ FWHM) and median-combining their $51 \times 51$ pixel
+        cutouts into a normalised PSF stamp.
+  \item Fitting a \textbf{Moffat profile} to the normalised PSF stamp.
+        The Moffat parameterisation was adopted over a Gaussian because it
+        better reproduces the extended wings of seeing-broadened stellar
+        PSFs, reducing residual power in the difference image $D$ at large
+        separations from subtracted sources.  The fitted Moffat profile
+        serves as $P_n$ in Equation~\ref{eq:D}.
+\end{enumerate}
+
+The per-frame seeing FWHM ranged from $3.5$--$8.9$\,px ($0.37''$--$0.94''$)
+across the campaign, with a median of $6.00$\,px ($0.64''$).
+
+\subsection{Photometric Normalisation}
+
+Before applying Equation~\ref{eq:D}, each science frame was scaled to the
+reference photometric system by multiplying by $F_r / F_n$. This ensures
+$F_r = F_n^{\rm eff}$ in the subtraction, so that the source term
+$S \cdot (F_r - F_n)$ vanishes and static sources cancel exactly.
+
+\subsection{Difference Image Quality}
+
+\begin{figure}[H]
+  \centering
+  % Upload: fig2_before_after.png from report_figures/
+  \includegraphics[width=\textwidth]{fig2_before_after.png}
+  \caption{ZOGY before/after comparison, $\pm80$\,px zoom around GX~339-4.
+           Left: individual science frame $N$. Centre: difference image $D$,
+           displayed on a symmetric colour scale ($\pm 5\sigma$). Right:
+           reference $R$ (236-frame coadd). The two contaminating neighbours
+           visible in $N$ and $R$ are suppressed in $D$.}
+  \label{fig:before_after}
+\end{figure}
+
+The quality of the ZOGY subtraction was assessed using the sigma-clipped
+standard deviation of $D$ in source-free background regions. In an ideal
+subtraction, this quantity equals unity; values in the range $0.7$--$1.3$
+are considered acceptable for a crowded Galactic field. For our 236 difference
+images the median clipped $D_{\rm std} = 0.738$, an improvement over the
+value of 0.726 obtained with Gaussian PSF modelling, and confirming
+the noise model is well-calibrated (Figure~\ref{fig:dstd}).
+The remaining deficit from the ideal value of 1.0 reflects spatially
+varying PSF across the mosaic, sub-pixel centring errors, and
+flat-fielding-induced correlated noise.
+
+\begin{figure}[H]
+  \centering
+  % Upload: fig4_dstd_timeline.png from report_figures/
+  \includegraphics[width=\textwidth]{fig4_dstd_timeline.png}
+  \caption{Top: sigma-clipped $D$ standard deviation per frame across all
+           nine OBs (Moffat PSF model).  Dashed lines mark the guideline
+           range $0.7$--$1.3$; the majority of frames fall within this
+           range, with a minority below 0.7 driven by frames with
+           well-matched seeing.  Bottom: per-frame seeing FWHM from
+           Moffat fits.  OBs are colour-coded.}
+  \label{fig:dstd}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  % Upload: fig5_d_histogram.png from report_figures/
+  \includegraphics[width=0.65\textwidth]{fig5_d_histogram.png}
+  \caption{Pixel value distribution of a representative difference image $D$
+           (OB1, frame 1). The red curve shows a Gaussian fit centred on
+           the sigma-clipped mean with $\sigma = 0.915$; the black dashed
+           curve shows the ideal unit Gaussian ($\sigma = 1.0$) at the same
+           centre. The measured width is consistent with the ZOGY noise model.
+           The non-zero mean reflects a residual sky offset between $N$ and
+           $R$, corrected locally at the target position in the photometry
+           stage.}
+  \label{fig:dhist}
+\end{figure}
+
+The $5\sigma$ point-source detection depth, estimated from the per-frame
+background noise and PSF FWHM, is $K_s \approx 17.1$\,mag (8\,px aperture).
+
+\subsection{GX~339-4 Position and Target Extraction}
+
+The pixel position of GX~339-4 in the reference frame was determined by
+seeding a \textsc{sep} centroid fit at the 2MASS catalogue position
+(RA~$= 255.7058\deg$, Dec~$= -48.7898\deg$; J2000) with a constrained $8$\,px
+search radius to avoid jumping to contaminating neighbours. The centroid
+converged at pixel $(750,\,1012)$ (0-indexed).
+
+The ZOGY matched-filter statistic $S$ (Equation~\ref{eq:S}) was evaluated at
+this pixel position for each of the 236 frames. Eight photometric reference
+stars from the 2MASS catalogue ($9.5 \leq K_s \leq 11.7$\,mag) were
+extracted from $S$ at the same time as a sanity check; their per-frame $S$
+values are consistent with zero (mean $< 1\%$ of the GX~339-4 scatter),
+confirming that the subtraction is working correctly for non-variable sources.
+
+% ============================================================
+\section{Lightcurve Analysis}
+\label{sec:lightcurve}
+% ============================================================
+
+\subsection{Orbital Ephemeris}
+
+The orbital phase $\phi$ for each frame was computed using the ephemeris of
+\citet{Heida2017}:
+
+\begin{equation}
+\phi = \frac{{\rm MJD} - T_0}{P} \pmod{1}, \qquad
+T_0 = 57529.397\,{\rm MJD}, \quad P = 1.7587\,{\rm d}
+\label{eq:phase}
+\end{equation}
+
+where $T_0$ is the time of inferior conjunction of the donor star (donor
+closest to the observer). For ellipsoidal modulation, minima are expected at
+$\phi = 0.0$ and $0.5$ (donor face-on, smallest projected area), and maxima at
+$\phi = 0.25$ and $0.75$ (donor side-on, largest projected area).
+
+\subsection{Raw Differential Lightcurve}
+
+Figure~\ref{fig:lc_raw} shows the per-OB mean ZOGY $S_{\rm target}$ as a
+function of time (MJD). A clear, monotonic brightening trend is apparent over
+the 66-day campaign, with the differential flux rising by a factor of
+approximately 4 between OB~1 (2025 May 17) and OB~7 (2025 Jul 18). This trend
+is confirmed as real by the reference stars, which remain flat throughout.
+
+\begin{figure}[H]
+  \centering
+  % Upload: lc06_ob_means_vs_phase.png from lightcurve/
+  \includegraphics[width=\textwidth]{lc06_ob_means_vs_phase.png}
+  \caption{Left: per-OB mean $S_{\rm target}$ as a function of MJD.
+           Error bars are the standard error on the mean within each OB.
+           A monotonic brightening of GX~339-4 is evident over the 66-day
+           campaign. Right: the same 9 data points phase-folded on the
+           Heida+2017 ephemeris ($P = 1.7587$\,d). Blue and red dotted lines
+           mark the expected ellipsoidal minima and maxima respectively.
+           Phase coverage is sparse, with gaps at $\phi = 0$--$0.29$ and
+           $0.4$--$0.55$.}
+  \label{fig:lc_raw}
+\end{figure}
+
+\subsection{Phase-Folded Lightcurve}
+
+The 9 OBs sample 9 distinct orbital phases in the range $\phi \approx
+0.29$--$0.94$. The right panel of Figure~\ref{fig:lc_raw} shows the
+phase-folded per-OB means. No clear ellipsoidal modulation is discernible:
+the inter-OB scatter is dominated by the long-term flux trend rather than the
+expected $\sim 5$--$15\%$ peak-to-peak ellipsoidal amplitude. In particular,
+OBs at similar orbital phases (e.g.\ OBs~1 and 9 at $\phi \approx 0.62$;
+OBs~4 and 5 at $\phi \approx 0.30$) show significantly different $S$ values,
+consistent with temporal variability rather than orbital modulation.
+
+OB~7 (2025 Jul 18, $\phi = 0.83$) is anomalously bright relative to adjacent
+OBs (factor $\sim 10$ above OB~6 at $\phi = 0.59$), and may indicate the
+onset of enhanced accretion activity preceding the confirmed outburst in
+OBs~11--12.
+
+\subsection{Interpretation}
+
+The monotonic brightening observed over OBs~1--9 indicates that GX~339-4 was
+already entering a more active accretion state during the observing campaign.
+The system was not in a stable quiescent state during this period, as
+implicitly assumed by the ellipsoidal modulation analysis. Consequently:
+
+\begin{itemize}
+  \item The long-term flux trend ($\sim$ factor 4 over 66 days) is larger than
+        the expected ellipsoidal signal ($\sim 5$--$15\%$) by more than an
+        order of magnitude.
+  \item The two signals cannot be separated with only 9 orbital phase
+        measurements and no independent constraint on the trend shape.
+  \item Extraction of the binary mass function from this dataset is not
+        currently feasible.
+\end{itemize}
+
+% ============================================================
+\section{Discussion and Future Work}
+\label{sec:discussion}
+% ============================================================
+
+The ZOGY pipeline performs correctly: the difference image noise is well
+characterised ($D_{\rm std}^{\rm clip} = 0.726$), reference stars are flat,
+and the $5\sigma$ depth of $K_s \approx 17.1$\,mag is adequate for detecting
+GX~339-4's quiescent flux ($K_s \approx 16.5$--$17$\,mag). The limiting factor
+is the astrophysical state of the target during the campaign.
+
+To successfully extract the ellipsoidal lightcurve and constrain the black hole
+mass, future observations should:
+
+\begin{enumerate}
+  \item \textbf{Confirm quiescence} using Swift/BAT or MAXI X-ray monitoring
+        before triggering NIR observations, and require a stable, low X-ray
+        flux for several weeks prior.
+  \item \textbf{Observe over 3--5 consecutive nights}, giving $\sim 1.7$--$2.8$
+        full orbital cycles in a single, short-baseline campaign. This maximises
+        phase coverage while minimising the risk of long-term variability
+        building up.
+  \item \textbf{Schedule OBs at target orbital phases} using the
+        \citet{Heida2017} ephemeris to ensure uniform coverage across $\phi =
+        0$--$1$, particularly at the currently unsampled phases
+        $\phi = 0$--$0.29$ and $0.4$--$0.55$.
+\end{enumerate}
+
+% ============================================================
+\section{Conclusions}
+\label{sec:conclusions}
+% ============================================================
+
+We have presented a complete Ks-band imaging reduction pipeline for 12 HAWK-I
+observing blocks of GX~339-4, incorporating dark subtraction, flat-fielding,
+sky subtraction, astrometric alignment, and ZOGY proper image subtraction. The
+pipeline successfully constructs a 236-frame coadded reference image, produces
+per-frame difference images with well-characterised noise ($D_{\rm std}^{\rm
+clip} = 0.726$), and extracts the ZOGY matched-filter flux of GX~339-4 and 8
+photometric reference stars at each epoch.
+
+Phase-folding the differential flux on the orbital ephemeris of
+\citet{Heida2017} reveals that GX~339-4 was undergoing a monotonic brightening
+over the 66-day campaign, indicative of rising accretion activity ahead of the
+confirmed outburst in OBs~11--12. The ellipsoidal modulation signal is
+swamped by this long-term trend and cannot be extracted from the current
+dataset. New observations obtained during a confirmed quiescent epoch, covering
+at least two full orbital periods, are required to proceed with ellipsoidal
+lightcurve modelling and black hole mass determination.
+
+% ============================================================
+% References
+% ============================================================
+\begin{thebibliography}{99}
+
+\bibitem[Barbary(2016)]{Barbary2016}
+Barbary K., 2016, \textit{sep}: Source Extraction and Photometry.
+JOSS, 1, 58
+
+\bibitem[Beroiz et al.(2020)]{Beroiz2020}
+Beroiz M., Cabral J.~B., Sanchez B., 2020, Astron.\ Comput., 32, 100384
+
+\bibitem[Breton et al.(2012)]{Breton2012}
+Breton R.~P. et al., 2012, ApJ, 769, 108
+
+\bibitem[Heida et al.(2017)]{Heida2017}
+Heida M. et al., 2017, ApJ, 846, 132.
+$T_0 = 57529.397$\,MJD, $P = 1.7587$\,d (inferior conjunction of donor).
+
+\bibitem[Markert et al.(1973)]{Markert1973}
+Markert T.~H. et al., 1973, ApJ, 184, L67
+
+\bibitem[Skrutskie et al.(2006)]{Skrutskie2006}
+Skrutskie M.~F. et al., 2006, AJ, 131, 1163
+
+\bibitem[Zackay \& Ofek(2015)]{ZackayOfek2015}
+Zackay B., Ofek E.~O., 2017, ApJ, 836, 187
+
+\bibitem[Zackay et al.(2016)]{Zackay2016}
+Zackay B., Ofek E.~O., Gal-Yam A., 2016, ApJ, 830, 27
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,1001 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{parskip}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{mdframed}
+
+\hypersetup{colorlinks=true, linkcolor=blue!60!black, urlcolor=blue!60!black}
+
+\titleformat{\section}[block]{\large\bfseries}{}{0em}{}[{\titlerule[0.4pt]}]
+\titleformat{\subsection}[runin]{\bfseries}{}{0em}{}[.\quad]
+
+\newmdenv[
+  backgroundcolor=gray!8,
+  linecolor=gray!40,
+  linewidth=0.6pt,
+  innerleftmargin=10pt,
+  innerrightmargin=10pt,
+  innertopmargin=8pt,
+  innerbottommargin=8pt,
+  skipabove=6pt,
+  skipbelow=4pt
+]{resultbox}
+
+\title{\textbf{GX~339-4 HAWK-I Ks-band Reduction}\\[4pt]
+       {\large Project Logbook}}
+\author{Eoin Trainor \\ University College Cork}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section*{Overview}
+\addcontentsline{toc}{section}{Overview}
+
+This logbook documents the full reduction of HAWK-I Ks-band observations of
+the black hole low-mass X-ray binary GX~339-4, from raw ESO archive data
+through to differential photometry and lightcurve analysis.  Entries are
+ordered chronologically and each covers the method applied, the numerical
+results obtained, and an interpretation of those results.
+
+The overall goal is to measure the ellipsoidal light variations of the
+donor star, which constrain the binary inclination and mass ratio.  This
+requires the system to be in deep quiescence, so a major early finding was
+identifying which observing blocks were contaminated by an outburst, and
+excluding them before photometric analysis.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Stage 1 -- Data Preparation and Calibration}
+
+\subsection{Method}
+Raw HAWK-I science, dark, and flat-field frames were downloaded from the
+ESO science archive.  A Python pipeline organised the files by type,
+filter, and detector integration time (DIT).  Master calibration products
+were built in the following order:
+
+\begin{enumerate}
+  \item \textbf{Master dark} -- sigma-clipped median of dark frames matched
+        to the science DIT (10\,s, NDIT\,=\,9).  Bad pixels identified as
+        outliers at $>3\sigma$ were flagged in a bad-pixel mask (BPM).
+  \item \textbf{Master flat} -- median of Ks twilight flats at DIT\,=\,1.676\,s,
+        normalised to unity.  Pixels outside $0.5$--$1.5$ times the median
+        were added to the BPM.
+  \item \textbf{Science calibration} -- each science frame was
+        dark-subtracted, flat-fielded, and bad-pixel corrected.  Only
+        chip\,1 (bottom-left detector, where GX~339-4 falls) was processed.
+\end{enumerate}
+
+Calibrated frames were aligned within each observing block (OB) using
+SExtractor source catalogues and an affine transformation, then grouped
+into per-OB stacks.  This produced one co-added image per OB for the
+initial photometric exploration.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/visualisation/finding_chart_clean.png}
+  \caption{HAWK-I Ks-band reference field of GX~339-4, built from the
+           inverse-variance co-addition of all 236 science frames.
+           \textit{Left:} full chip\,1 ($2048\times2048$\,px,
+           $\sim\!3.6'\times3.6'$); the cyan box marks the $\pm90$\,px
+           region around the target.  \textit{Right:} $\pm80$\,px
+           ($8.5''$) zoom; GX~339-4 is circled in cyan.  The field is
+           severely crowded, with several sources within one PSF FWHM
+           of the target.  Scale bars: $1'$ (left) and $5''$ (right).}
+  \label{fig:finding_chart}
+\end{figure}
+
+\subsection{Results}
+
+\begin{resultbox}
+13 OB co-adds produced (OBs 1--9: May--Jul 2025; OBs 10--12: Aug--Sep 2025,
+later identified as outburst; OB\,13: a second epoch on 23 Jul 2025).
+Median seeing across all frames: $\sim0.62''$ (FWHM $\approx$\,5.8\,px at
+$0.106''$/px).
+\end{resultbox}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/logs/calibration/summary_plots/summary_01_sky_mean_per_ob.png}
+  \caption{Mean Ks-band sky background level per OB.  Error bars show the
+           frame-to-frame standard deviation within each OB.  Sky levels
+           vary between $\sim\!10\,500$\,ADU (OB\,4, 2025-06-19) and
+           $\sim\!18\,000$\,ADU (OB\,11, 2025-09-19) across the campaign,
+           reflecting lunar phase and seasonal sky brightness changes.}
+  \label{fig:sky_mean}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/logs/calibration/summary_plots/summary_02_sky_std_per_ob.png}
+  \caption{Frame-to-frame sky variability (standard deviation of per-frame
+           sky medians) within each OB.  Most OBs show stable sky conditions
+           ($\sigma_\mathrm{sky} \lesssim 200$\,ADU).  OB\,9 (2025-07-23)
+           is a clear outlier at $\sigma \approx 600$\,ADU, indicating
+           variable transparency that night; this is also visible in the
+           residuals plot (Fig.~\ref{fig:calib_residuals}).}
+  \label{fig:sky_std}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/logs/calibration/summary_plots/summary_03_residuals_per_ob.png}
+  \caption{Per-frame post-sky-subtraction residuals for all 12 OBs.  Each dot
+           is one science frame; the horizontal bar is the OB mean.  Residuals
+           are centred on zero for OBs~1--11, confirming that sky subtraction
+           is unbiased.  OB~9 (2025-07-23) shows elevated scatter, likely
+           driven by variable sky transparency that night.}
+  \label{fig:calib_residuals}
+\end{figure}
+
+\subsection{Interpretation}
+The calibration pipeline ran without major issues.  The bad-pixel mask was
+dominated by hot pixels from the dark, with the flat adding a small number
+of low-sensitivity edge pixels.  Having one co-added image per OB was
+sufficient for a first look at the source brightness and for assessing the
+BAT X-ray state context.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Stage 2 -- Initial Circular Aperture Photometry (13 Co-adds)}
+
+\subsection{Method}
+A simple circular aperture was placed on the GX~339-4 centroid in each of
+the 13 per-OB co-added images.  The centroid was found by flux-weighted
+recentering within a $20\times20$\,px search box around the WCS-predicted
+position.  A fixed aperture of radius $r = 6$\,px was used with a sky
+background annulus of $r_\mathrm{in} = 10$\,px to $r_\mathrm{out} = 16$\,px.
+Background was estimated via iterative sigma-clipping of the annulus pixel
+distribution ($3\sigma$, 5 iterations): in each pass, pixels deviating
+more than $3\sigma$ from the running median were flagged as outliers and
+excluded from subsequent iterations.  This sigma-clip procedure acts as
+a per-frame \textit{pixel mask}, suppressing two sources of contamination
+that would otherwise bias the sky level upward: (i) PSF wings from the
+two bright field stars whose halos overlap the outer annulus in several
+OBs, and (ii) isolated hot or bad pixels.  The background level $B$ was
+taken as the median of the surviving unmasked pixels; $\sigma_B$ was
+their standard deviation, propagated into the SNR estimate.  The net
+source flux was the aperture sum minus $B$ times the aperture area.
+No comparison-star differential correction was applied at this stage.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.48\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/photometry/aperture_v1_outputs/aperture_cutouts/gx3394_0001.png}
+  \caption{Ks-band cutout of GX~339-4 (OB\,1, 2025-05-17) with the
+           circular aperture ($r = 6$\,px, inner ring) and sky annulus
+           ($r = 10$--$16$\,px, outer rings) overlaid.  A bright neighbour
+           is visible to the upper right; its halo falls within the outer
+           annulus, biasing the sky estimate and contaminating the net flux
+           measurement.  The proximity of this neighbour means the
+           net flux cannot be cleanly attributed to GX~339-4 alone.}
+  \label{fig:ap_cutout}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.48\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/photometry/aperture_v1_outputs/annulus_histograms/annulus_hist_0001.png}
+  \hfill
+  \includegraphics[width=0.48\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/photometry/aperture_v1_outputs/annulus_histograms/annulus_hist_0011.png}
+  \caption{Annulus pixel-value distributions for OB\,1 (left, quiescent,
+           2025-05-17) and OB\,11 (right, outburst, 2025-08-14).
+           Grey bars show all raw annulus pixels; orange bars show the
+           sigma-clipped (retained) subset.  The dashed vertical line is
+           the iterative clip threshold; the solid line marks the final
+           background median $B$; dotted lines show $B \pm \sigma_B$.
+           In OB\,1 the annulus is uncontaminated: the raw and retained
+           distributions are nearly identical and $B$ is well-defined.
+           In OB\,11 a low-value tail from PSF wings of the saturating
+           GX~339-4 source extends into the inner annulus edge; the
+           sigma-clip masks these pixels, pulling $B$ toward the true
+           sky level and preventing an overestimated background.}
+  \label{fig:annulus_hist}
+\end{figure}
+
+\subsection{Results}
+
+\begin{resultbox}
+\begin{tabular}{lrr}
+  \toprule
+  Date & Net flux (ADU) & SNR \\
+  \midrule
+  2025-05-17 (OB\,1) & 27\,688  &  3.8 \\
+  2025-06-02 (OB\,2) & 29\,894  &  5.5 \\
+  2025-06-04 (OB\,3) & 18\,216  &  3.3 \\
+  2025-06-19 (OB\,4) & 33\,723  &  7.7 \\
+  2025-07-03 (OB\,5) & 35\,234  &  5.2 \\
+  2025-07-14 (OB\,6) & 39\,286  &  5.9 \\
+  2025-07-18 (OB\,7) & 51\,766  &  6.8 \\
+  2025-07-20 (OB\,8) & 41\,721  & 10.7 \\
+  2025-07-23 (OB\,9) & 42\,994  & 10.1 \\
+  2025-07-23 (OB\,9b)& 56\,005  &  8.4 \\
+  2025-08-14 (OB\,10)& 972\,560 & 141.5 \\
+  2025-08-29 (OB\,11)&1\,228\,689& 115.6 \\
+  2025-09-19 (OB\,12)& 789\,364 &  97.4 \\
+  \bottomrule
+\end{tabular}
+\end{resultbox}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/photometry/comparison_stars/Comp Stars Residuals/GX 339-4 Relative to Star 3.png}
+  \caption{Differential Ks-band magnitude of GX~339-4 relative to comparison
+           Star~3 ($K_s \approx 14.5$\,mag) across all 13 per-OB co-adds.
+           OBs~1--9 (May--Jul 2025) cluster near $\Delta m \approx 3.3$--$3.6$,
+           placing GX~339-4 at $K_s \approx 17$--$18$\,mag.  OBs~10--12
+           (Aug--Sep 2025) drop to $\Delta m \approx -0.5$--$+0.1$, indicating
+           GX~339-4 has brightened to near the comparison star flux during
+           outburst.}
+  \label{fig:gx_vs_star3}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.48\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/photometry/aperture_v1_outputs/images/Figure_3.png}
+  \hfill
+  \includegraphics[width=0.48\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/photometry/aperture_v1_outputs/images/Figure_11.png}
+  \caption{Ks-band cutouts with aperture ($r = 6$\,px, inner ring) and sky
+           annulus ($r = 10$--$16$\,px, outer rings) overlaid, illustrating
+           two distinct contamination regimes.  \textit{Left}: OB\,3
+           (2025-06-04, quiescent).  Two bright field stars are clearly
+           resolved within the annulus region -- upper-right and lower-right
+           of centre -- whose elevated pixels would bias $B$ upward without
+           sigma-clip masking.  \textit{Right}: OB\,11 (2025-08-14,
+           outburst).  GX~339-4 is saturating and its extended PSF wings
+           spill into the inner annulus; the sigma-clip masks the resulting
+           high-flux tail, preventing the sky level from being
+           overestimated.  In both cases the final background $B$ is
+           estimated from the unmasked (orange) pixel subset shown in
+           Figure~\ref{fig:annulus_hist}.}
+  \label{fig:annulus_cutouts}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.55\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/photometry/aperture_v2_outputs/circular_aperture_outputs/GX 339-4 (Annulus Overlay).png}
+  \caption{GX~339-4 aperture and sky annulus with the pixel mask overlaid.
+           The yellow circle marks the source aperture; the two cyan circles
+           bound the sky annulus ($r = 10$--$16$\,px).  The green region
+           shows the \textit{unmasked} (retained) annulus pixels that
+           contribute to the sky estimate.  The asymmetric exclusion of
+           pixels in the lower portion of the annulus is caused by the
+           halo of the bright neighbour (upper left) bleeding into the
+           annulus; the sigma-clip procedure identifies these elevated
+           pixels and removes them, preventing the sky level from being
+           biased high.}
+  \label{fig:annulus_overlay}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/photometry/lightcurve_13ob_aperture.png}
+  \caption{GX~339-4 net Ks-band flux vs MJD for all 13 per-OB co-adds
+           ($r = 6$\,px aperture, sigma-clipped sky background).
+           OBs~1--10 (blue circles, May--Jul 2025) show a quiescent
+           baseline of $\sim$20\,000--60\,000\,ADU with a gradual
+           upward trend.  OBs~11--13 (red stars, Aug--Sep 2025) jump
+           by a factor of $\sim$20--30 to $>900\,000$\,ADU, marking
+           the onset of a hard X-ray outburst confirmed by Swift BAT
+           (Section~\ref{sec:bat}).  Error bars are $1\sigma$
+           (flux/SNR).}
+  \label{fig:lc_13ob}
+\end{figure}
+
+\subsection{Interpretation}
+The most striking feature is a factor of $\sim$20--40 increase in net flux
+between OBs~9 and~10 (July to August 2025), with OBs~10--12 showing
+fluxes an order of magnitude above the earlier observations.  This
+immediately flagged an X-ray outburst in progress during those later OBs.
+The low SNR values for OBs~1--9 (3--11) reflect both the faintness of
+GX~339-4 in quiescence ($K_s \approx 17$\,mag) and the contamination from
+blended field stars within the fixed aperture -- an issue that motivated
+the development of a more rigorous aperture approach in Stage~5.
+The high SNR for OBs~10--12 is dominated by the bright accretion
+disc during outburst, not the donor.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Stage 3 -- Swift BAT X-ray Analysis}
+\label{sec:bat}
+
+\subsection{Method}
+The Swift Burst Alert Telescope (BAT) daily-averaged hard X-ray lightcurve
+(15--50\,keV) for GX~339-4 was downloaded from the BAT transient monitor,
+covering 2005 to 2026.  Two analyses were carried out:
+
+\begin{enumerate}
+  \item \textbf{Overlay of ESO OB windows on the BAT lightcurve} -- Each OB
+        start and end time was converted to MJD and plotted as a shaded
+        region on the BAT light curve.  This gave immediate visual
+        confirmation of which OBs fell in active versus quiescent X-ray
+        states.
+
+  \item \textbf{Statistical outburst classification} -- The full BAT
+        history was used to define a quiescent baseline via
+        high-side-clipping ($1\sigma$ iterative), yielding a quiescent
+        rate $\mu_q$ and scatter $\sigma_q$.  Each OB was assigned a
+        z-score relative to this baseline, and a coherence-weighted
+        neighbour algorithm (requiring $\geq 3\sigma$ points with
+        $\geq 50\%$ elevated neighbours within a 2-day window) classified
+        each OB as \textit{Quiescent}, \textit{Elevated}, or
+        \textit{Outburst}.
+\end{enumerate}
+
+\subsection{Results}
+
+\begin{resultbox}
+OBs 1--9 (2025 May--Jul): classified as \textbf{Quiescent} or
+\textbf{Elevated} -- BAT rates consistent with the low-state baseline.\\[4pt]
+OBs 10--12 (2025 Aug--Sep): classified as \textbf{Outburst} -- z-scores of
+$10\sigma$--$30\sigma$ above quiescence, coinciding with the factor
+$\sim$30 flux increase seen in the NIR aperture photometry.\\[4pt]
+Quiescent BAT rate baseline: $\mu_q \approx 0$\,cts\,cm$^{-2}$\,s$^{-1}$
+(system below BAT sensitivity in true quiescence).
+\end{resultbox}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/xray_analysis/outburst/swift_bat_with_eso_observing_blocks.png}
+  \caption{Swift BAT 15--50\,keV daily lightcurve of GX~339-4 (red points)
+           over the 2025 campaign window, with ESO HAWK-I observing block
+           windows marked as dashed vertical lines (OB numbers labelled at
+           the top).  The $\pm 1\sigma$ and $\pm 3\sigma$ quiescence bands
+           are shown as dotted lines.  OB\,5 (MJD\,$\approx 60855$) coincides
+           with a prominent X-ray flare; OBs~10--12 fall after the outburst
+           onset near MJD\,$\approx 60900$.}
+  \label{fig:bat_obs}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/xray_analysis/outburst/analysis_outputs/swift_bat_with_eso_observing_blocks_quiescence_sigma.png}
+  \caption{As Fig.~\ref{fig:bat_obs}, with the quiescence baseline
+           ($\mu_q$, blue solid line) and $+3\sigma$ outburst threshold
+           (blue dashed) derived from high-side sigma-clipping of the full
+           BAT history.  Points flagged as $\geq 3\sigma$ outburst
+           detections are highlighted in orange.  OBs~10--12 land firmly
+           above the outburst threshold.}
+  \label{fig:bat_sigma}
+\end{figure}
+
+\subsection{Interpretation}
+The BAT analysis conclusively showed that the system underwent a hard X-ray
+outburst beginning around 2025 August, coinciding exactly with the dramatic
+NIR brightening seen in Stage~2.  During outburst the accretion disc
+dominates the NIR flux and drowns any ellipsoidal signal from the donor
+star.  OBs~10--12 were therefore excluded from all subsequent photometric
+analysis.  OBs~1--9 (May--July 2025) were retained as the quiescent
+dataset, though the elevated BAT classification for some of these OBs
+suggested the system may not have been in deep quiescence even then, which
+partly explains the failure to detect a clean ellipsoidal signal later.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Stage 4 -- Orbital Phase Coverage Analysis}
+
+\subsection{Method}
+The mid-exposure MJD of each OB co-add was computed from the FITS headers
+and converted to orbital phase using the Heida et al.\ (2017) ephemeris:
+\begin{equation}
+  \phi = \left(\frac{\mathrm{MJD} - T_0}{P}\right) \bmod 1,
+  \qquad T_0 = 57529.397\;\mathrm{MJD},\quad P = 1.7587\;\mathrm{d}.
+\end{equation}
+Here $\phi = 0$ corresponds to inferior conjunction of the donor star
+(donor closest to the observer, ellipsoidal lightcurve minimum), and
+$\phi = 0.25$ and $\phi = 0.75$ correspond to quadrature (ellipsoidal
+maxima).
+
+A phase coverage histogram was generated binning the observations into 100
+equal intervals over the full $\phi = 0$--$1$ range.
+
+\subsection{Results}
+
+\begin{resultbox}
+\begin{tabular}{lrl}
+  \toprule
+  OB & Date & Phase $\phi$ \\
+  \midrule
+  OB\,1  & 2025-05-17 & 0.630 \\
+  OB\,2  & 2025-06-02 & 0.740 \\
+  OB\,3  & 2025-06-04 & 0.847 \\
+  OB\,4  & 2025-06-19 & 0.295 \\
+  OB\,5  & 2025-07-03 & 0.284 \\
+  OB\,6  & 2025-07-14 & 0.579 \\
+  OB\,7  & 2025-07-18 & 0.824 \\
+  OB\,8  & 2025-07-20 & 0.924 \\
+  OB\,9  & 2025-07-23 & 0.597--0.605 \\
+  \bottomrule
+\end{tabular}\\[6pt]
+Phase range sampled (quiescent OBs 1--9): $\phi \approx 0.28$--$0.92$.\\
+Gap: inferior conjunction region ($\phi \lesssim 0.28$) not observed.
+\end{resultbox}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/xray_analysis/orbital_phase/phase_coverage_clean.png}
+  \caption{Orbital phase coverage of the 234 good frames across 9 OBs,
+           binned into 20 equal phase intervals ($\Delta\phi = 0.05$).
+           Blue bars show frames in covered bins (13--48 frames per bin);
+           the shaded red region ($\phi < 0.28$) marks the unobserved gap
+           around inferior conjunction.  Blue dotted lines indicate
+           conjunction phases ($\phi = 0, 0.5$) and red dotted lines
+           indicate quadrature ($\phi = 0.25, 0.75$), where the
+           ellipsoidal lightcurve reaches its minima and maxima
+           respectively.}
+  \label{fig:phase_coverage}
+\end{figure}
+
+\subsection{Interpretation}
+While 9 OBs span a wide range of phases, the region around inferior
+conjunction ($\phi \sim 0$--$0.28$) is entirely absent from the dataset.
+This is a significant gap: the ellipsoidal minima at $\phi = 0$ and
+$\phi = 0.5$ are needed to anchor the lightcurve shape and amplitude, and
+without the $\phi \sim 0$ minimum it is impossible to fully constrain the
+ellipsoidal model.  Phase coverage is clustered in the quadrature and
+post-conjunction ranges.  Future observations should specifically target
+OB windows that land near $\phi \approx 0.0$--$0.2$.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Stage 5 -- Refined Aperture Photometry with Comparison Stars}
+
+\subsection{Method}
+A more rigorous aperture photometry pipeline was developed for
+single-frame analysis, motivated by the low SNR and field-crowding problems
+seen in Stage~2.  The pipeline proceeded as:
+
+\begin{enumerate}
+  \item \textbf{PSF measurement} -- Five comparison stars spanning
+        $K_s \approx 14$--$17$\,mag were selected.  Each was fitted with
+        a 2D Gaussian; the median FWHM across all five defined the
+        reference PSF scale.
+  \item \textbf{Annulus geometry} -- Sky annulus fixed at $3.0$--$5.0$
+        times the median FWHM ($22.7$--$37.8$\,px), ensuring consistent
+        background sampling across all stars.
+  \item \textbf{Background pixel masking (truncated-core method)} --
+        Rather than iterative sigma-clipping, sky background was estimated
+        from the \textit{core} of the annulus pixel distribution.
+        The mode of the distribution was located via MAD-based robust
+        statistics, and a symmetric window
+        $[B_\mathrm{mode} - \delta,\; B_\mathrm{mode} + \delta]$ was
+        placed around it.  Any annulus pixel falling outside this window
+        was masked and excluded from the background estimate.  This
+        rejects PSF halos from neighbouring stars, bad pixels, and
+        scattered light without relying on iterative convergence.
+        The background $B$ was the mean of surviving core pixels; the
+        SNR calculation used the core pixel count $N_\mathrm{core}$
+        (rather than the full annulus area) to avoid overstating the
+        effective sample size.  For OB\,1, this reduced 3116 raw annulus
+        pixels to 2309 core pixels (74\%), collapsing the pixel spread
+        from a raw standard deviation of 3318\,ADU to a core MAD of
+        6.4\,ADU -- a factor $\sim$500 improvement in background
+        precision.
+  \item \textbf{Comparison star ranking} -- Stars were ranked by maximum
+        SNR$_3$ (SNR using core-pixel background estimation), with
+        penalties for saturation, poor Gaussian fit, and PSF axis ratio.
+  \item \textbf{GX aperture selection} -- The optimal aperture for GX~339-4
+        was found by a stability criterion: the smallest radius at which
+        $|\Delta F(r_i \to r_{i+1})| \leq 2\sqrt{\sigma_i^2 + \sigma_{i+1}^2}$
+        for two consecutive steps.  If no plateau was found, the
+        peak-SNR aperture was used as a fallback.
+\end{enumerate}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.48\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/photometry/aperture_v2_outputs/circular_aperture_outputs/Annulus Histogram.png}
+  \hfill
+  \includegraphics[width=0.48\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/photometry/aperture_v2_outputs/aperture_outputs_final/GX 339-4 Annulus Overlay.png}
+  \caption{\textit{Left}: Annulus pixel-value histogram for OB\,1
+           (2025-05-17) using the v2 pipeline.  The dominant spike at
+           $\approx 14\,200$\,ADU is the true sky background; a small
+           cluster near 0\,ADU arises from bad-pixel regions that fall
+           within the large annulus.  The solid blue line marks the core
+           mean $B$; dotted lines bound the tight core window used for
+           masking.  All pixels outside this window are excluded before
+           $B$ is computed.
+           \textit{Right}: GX~339-4 field with photometric aperture
+           (yellow circle, $r = 5.59$\,px) and sky annulus (cyan rings,
+           $r = 22.7$--$37.8$\,px) overlaid.  The dark green shading
+           marks the annulus pixels that survived the truncated-core mask
+           and were used for background estimation; unshaded areas within
+           the annulus rings (notably toward the lower-right) were masked
+           out.  The bright field star visible at upper-left lies outside
+           the annulus.}
+  \label{fig:core_mask}
+\end{figure}
+
+\subsection{Results}
+
+\begin{resultbox}
+Median FWHM from 5 comparison stars: 7.55\,px ($0.80''$).\\[3pt]
+\textbf{Comparison star ranking:}\\
+\begin{tabular}{lrrrr}
+  \toprule
+  Star & FWHM (px) & Max SNR$_3$ & Opt $r$ (px) & Score \\
+  \midrule
+  Star 3 & 7.42 & 9916 & 5.00 & 16458 \\
+  Star 2 & 7.63 & 8783 & 5.00 & 14594 \\
+  Star 1 & 7.57 & 7437 & 5.00 & 12330 \\
+  Star 4 & 7.55 & 7287 & 5.00 & 12097 \\
+  Star 5 & 2.13 & 1008 & 16.0 & 309   \\
+  \bottomrule
+\end{tabular}\\[6pt]
+\textbf{GX 339-4 measurement (OB\,1 co-add):}\\
+Chosen aperture: $r = 5.59$\,px (max-SNR fallback -- no plateau found).\\
+Net flux: 26\,557\,ADU.  SNR$_3 = 413$.  Background: 14\,215\,ADU\,px$^{-1}$.
+\end{resultbox}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/photometry/aperture_v2_outputs/circular_aperture_outputs/GX 339-4 Analysis.png}
+  \caption{Four-panel aperture diagnostic for GX~339-4 (OB\,1,
+           2025-05-17).
+           \textit{Top left}: field cutout with chosen aperture
+           ($r = 5.59$\,px, yellow) and sky annulus
+           ($r = 22.7$--$37.8$\,px, cyan).
+           \textit{Top right}: radial mean (blue) and median (orange) ADU
+           profile.  Both flatten to the sky level
+           ($\approx 14\,200$\,ADU) by $\sim$20\,px, confirming the
+           annulus inner edge begins well beyond the PSF core; the
+           mean exceeds the median only at small radii where the PSF
+           peak dominates.
+           \textit{Bottom left}: curve of growth (background-subtracted
+           cumulative flux vs aperture radius).  The continuous rise
+           with no plateau confirms that blended neighbour flux
+           contaminates the aperture at all radii.
+           \textit{Bottom right}: GX~339-4 SNR$_3$ vs aperture radius;
+           the peak at $r = 5.59$\,px defines the chosen aperture via
+           the max-SNR fallback.}
+  \label{fig:gx_analysis}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/photometry/aperture_v2_outputs/aperture_outputs_final/Stability Test.png}
+  \caption{GX~339-4 aperture stability test (OB\,1).  Blue points show
+           $|\Delta F|$ between adjacent aperture radii; the orange
+           dashed line shows $2\times$ the combined photometric
+           uncertainty (the stability threshold).  A plateau would be
+           flagged at the first radius where two consecutive blue points
+           fall below the orange line; no such crossing occurs across
+           the full tested range ($r = 2.6$--$18.7$\,px).  This failure
+           directly demonstrates that blended neighbour flux adds
+           continuously with aperture size, making the max-SNR fallback
+           ($r = 5.59$\,px) the only viable aperture choice.}
+  \label{fig:stability_test}
+\end{figure}
+
+\subsection{Interpretation}
+The refined pipeline achieved SNR\,$\approx 413$ on the OB\,1 co-add for
+GX~339-4, a substantial improvement over the $\sim$4 obtained in Stage~2
+for the same OB.  The main gains came from the much larger annulus
+(22.7--37.8\,px versus 10--16\,px), which avoids contamination from the
+halo of nearby stars, and from the tighter background estimation using only
+the core of the annulus pixel distribution.
+
+Star~5 was an outlier: its measured FWHM of 2.1\,px is unrealistically
+small (likely a failed Gaussian fit), and its optimal aperture radius of
+16\,px is much larger than for the other stars, suggesting it is blended or
+saturated.  It was penalised in the ranking and not used.
+
+The failure of the stability criterion to find a plateau for GX~339-4 is
+significant: the flux continues rising with aperture radius because of
+blended light from a nearby field star.  This means no aperture radius
+provides a clean, uncontaminated measurement of GX~339-4's flux alone ---
+any net flux value carries an irreducible systematic contribution from
+the blended neighbour, limiting the reliability of this photometry.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.7\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/photometry/aperture_v2_outputs/aperture_outputs_final/Flux vs Aperture Radius.png}
+  \caption{Net flux of GX~339-4 as a function of circular aperture radius
+           (OB\,1 co-add).  Unlike an isolated point source, the flux rises
+           continuously with no plateau, because contaminating light from a
+           blended neighbour enters the aperture at all radii.  The chosen
+           aperture ($r = 5.59$\,px, dashed line) corresponds to the
+           peak-SNR fallback; no stability criterion plateau was found.}
+  \label{fig:flux_vs_radius}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/photometry/curve_of_growth.png}
+  \caption{\textit{Left:} Normalised cumulative curve of growth for four
+           reference stars (blue shades, $K_s = 9.5$--$11.2$\,mag) and
+           GX~339-4 (red), measured on the deep reference image.  All
+           curves are normalised to 1.0 at $r = 15$\,px.  The reference
+           stars converge smoothly to unity by $r \approx 10$\,px,
+           as expected for isolated point sources.  GX~339-4 rises
+           continuously and exceeds 1.0, confirming that flux from the
+           blended neighbour enters the aperture at all radii.
+           \textit{Right:} SNR$_3$ vs aperture radius for the four
+           comparison stars from the refined single-frame analysis.
+           All four peak near $r = 5$\,px (marked), consistent with
+           the PSF FWHM of $\sim$7.5\,px; choosing the peak-SNR
+           aperture is well motivated for isolated sources.}
+  \label{fig:cog}
+\end{figure}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Stage 6 -- ZOGY Proper Difference Imaging}
+
+\subsection{Method}
+ZOGY proper image subtraction (Zackay, Ofek \& Gal-Yam 2016) was applied
+to all 9 quiescent OBs (OBs~1--9, 236 frames total).  The algorithm
+proceeds in Fourier space so that the difference image $\hat{D}$ has
+spatially uniform noise:
+
+\begin{equation}
+  \hat{D} = \frac{F_r\,\hat{P}_r\,\hat{N} - F_n\,\hat{P}_n\,\hat{R}}
+                 {\sqrt{F_r^2\,\sigma_n^2\,|\hat{P}_r|^2 +
+                        F_n^2\,\sigma_r^2\,|\hat{P}_n|^2}},
+\end{equation}
+
+where $R$ and $N$ are the reference and science images, $P_r$, $P_n$ their
+PSFs, $\sigma_r$, $\sigma_n$ background RMS values, and $F_r$, $F_n$
+photometric flux normalisations.  The implementation steps were:
+
+\begin{enumerate}
+  \item \textbf{Reference construction} -- A deep reference image $R$ was
+        built by inverse-variance-weighted co-addition of all 9 OBs in
+        Fourier space, matching each frame's PSF to a common kernel.
+
+  \item \textbf{PSF modelling} -- Per-frame PSFs were modelled as Moffat
+        profiles fitted to isolated bright stars.  Moffat profiles were
+        adopted over Gaussians because they better reproduce the extended
+        wings of seeing-broadened stellar PSFs, reducing the residual
+        power in $D$ at large separations from subtracted sources.
+        Flux zero-points $F_n$ were determined by matching instrumental
+        magnitudes to 2MASS $K_s$ catalogue values.
+
+  \item \textbf{Difference image and $S$ statistic} -- Each of the 236
+        science frames was subtracted against the reference to produce $D$.
+        The matched-filter detection statistic $S$ was computed by
+        convolving $\hat{D}$ with the science PSF in Fourier space.
+        $S_\mathrm{target}$ at the GX~339-4 centroid gives an SNR-optimal
+        estimate of the differential flux per frame.
+
+  \item \textbf{Reference star check} -- $S$ was also extracted at eight
+        non-variable reference star positions as a systematics diagnostic.
+\end{enumerate}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/difference/report_figures/fig1_reference_image.png}
+  \caption{ZOGY reference image $R$ built from the inverse-variance-weighted
+           co-addition of all 236 science frames (9 OBs).  \textit{Left:}
+           full HAWK-I chip\,1 field ($2048 \times 2048$\,px,
+           $\sim 3.6' \times 3.6'$); the target region is indicated by the
+           red box.  \textit{Right:} 80\,px ($8.5''$) zoom on GX~339-4
+           (circled), showing the crowded field environment.}
+  \label{fig:reference_image}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/difference/report_figures/fig2_before_after.png}
+  \caption{ZOGY before/after comparison for a single science frame
+           (OB\,1, frame 1).  \textit{(a)} Science frame $N$: field stars
+           and GX~339-4 visible in the crowded field.
+           \textit{(b)} Difference image $D$: field stars subtract cleanly
+           to noise, leaving only sources that changed flux relative to the
+           reference.  GX~339-4 (crosshair) shows a residual consistent
+           with its differential flux at this epoch.
+           \textit{(c)} Reference image $R$: the deep co-add used for
+           subtraction.  All panels show an 80\,px zoom around GX~339-4.}
+  \label{fig:before_after}
+\end{figure}
+
+\subsection{Results}
+
+\begin{resultbox}
+236 frames processed; 2 rejected by per-OB $3\sigma$ clipping
+(1 each in OBs~2 and 8), leaving \textbf{234 good frames}.\\[3pt]
+Median PSF FWHM (Moffat): 6.00\,px = $0.64''$ (range $\approx 0.37''$--$0.94''$) across all OBs.\\[3pt]
+\begin{tabular}{lcc}
+  \toprule
+  OB & Frames (good) & Mean FWHM ($''$) \\
+  \midrule
+  OB\,1 & 26/26 & 0.85 \\
+  OB\,2 & 25/26 & 0.82 \\
+  OB\,3 & 26/26 & 0.55 \\
+  OB\,4 & 26/26 & 0.76 \\
+  OB\,5 & 26/26 & 0.70 \\
+  OB\,6 & 26/26 & 0.75 \\
+  OB\,7 & 26/26 & 0.61 \\
+  OB\,8 & 25/26 & 0.83 \\
+  OB\,9 & 28/28 & 0.55 \\
+  \bottomrule
+\end{tabular}\\[6pt]
+Raw $S_\mathrm{target}$ scatter: $\sigma \approx 8 \times 10^8$ matched-filter units.\\
+OB-to-OB offset dominates over intra-OB variability by $\sim$factor of 10.
+\end{resultbox}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/logs/zogy/quality/q02_fwhm_timeline.png}
+  \caption{Moffat-fitted PSF FWHM (pixels) for each of the 234 science
+           frames, ordered by frame index.  Vertical grey lines separate
+           OBs.  The median FWHM is 6.00\,px ($0.64''$); individual frames
+           span approximately 3.5--8.9\,px ($0.37''$--$0.94''$).  The
+           large seeing variation between and within OBs drives the
+           PSF-matching residuals that dominate the ZOGY noise floor.}
+  \label{fig:fwhm_timeline}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/logs/zogy/quality/q03_zeropoint_timeline.png}
+  \caption{Photometric flux zero-point $F_n$ per frame, derived by
+           matching instrumental aperture fluxes to 2MASS $K_s$
+           magnitudes.  The median is $1.17\times10^{10}$\,ADU per
+           2MASS linear flux unit.  The factor $\sim$3--4 scatter within
+           some OBs reflects variable atmospheric transparency and
+           changing PSF encircled energy, and contributes to the
+           differential-flux uncertainty in the $S$ statistic.}
+  \label{fig:zp_timeline}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/logs/zogy/quality/q05_diff_pixel_stats.png}
+  \caption{Pixel statistics of the ZOGY difference images across all 234
+           frames.  \textit{Left:} distribution of $\sigma(D)$, the
+           $3\sigma$-clipped background standard deviation of each $D$
+           image.  The ZOGY formalism predicts $\sigma(D) = 1$ for a
+           correctly normalised difference image; the observed median of
+           0.738 (up from 0.726 with the previous Gaussian PSF model)
+           reflects the improvement from Moffat wing fitting, but remains
+           below the ideal value of 1.0.  The remaining deficit
+           ($\approx 0.26$) is attributed to spatially varying PSF across
+           the HAWK-I mosaic, sub-pixel centring errors, and
+           flat-fielding-induced correlated noise, none of which are
+           corrected by the PSF profile choice alone.
+           \textit{Right:} distribution of $\mathrm{mean}(D)$, centred
+           on zero (median $= 0.036$), confirming no systematic bias in
+           the sky subtraction.}
+  \label{fig:diff_pixel_stats}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/difference/report_figures/fig3_sample_diff.png}
+  \caption{Sample ZOGY difference image $D$ for OB\,1, frame 1.
+           \textit{Left:} full chip ($2048 \times 2048$\,px); the stretch
+           is $\pm 5\sigma_D$.  Most of the field subtracts cleanly to
+           noise; a handful of residuals from poorly-matched PSFs are
+           visible as blue/red dipoles.  \textit{Right:} 80\,px zoom
+           on GX~339-4, showing the faint differential residual.}
+  \label{fig:sample_diff}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/logs/zogy/quality/q04_reference_psf.png}
+  \caption{Reference PSF $P_R$ of the co-added reference image (236
+           frames).  \textit{Left:} 2D image of the effective PSF kernel.
+           \textit{Centre:} azimuthally averaged radial profile on a
+           logarithmic scale; the FWHM/2 half-power radius is marked (red
+           dashed).  \textit{Right:} row and column cross-sections through
+           the PSF centre.  The reference PSF has FWHM $\approx 5.60$\,px
+           ($0.59''$), consistent with the median Moffat-fitted seeing
+           of the campaign.}
+  \label{fig:ref_psf}
+\end{figure}
+
+\subsection{Interpretation}
+ZOGY successfully removed the blended field-star contamination that
+defeated aperture photometry, since field stars cancel in $D$ (they are
+present identically in $R$ and $N$).  The per-frame $S_\mathrm{target}$
+values are physically meaningful estimates of the differential flux of
+GX~339-4 relative to the reference epoch.  Switching from Gaussian to
+Moffat PSF profiles improved the median $\sigma(D)$ from 0.726 to 0.738,
+a small but real gain from better wing modelling; the residual deficit
+from the ideal value of 1.0 is dominated by spatially varying PSF,
+sub-pixel centring errors, and correlated noise from the reduction
+pipeline.
+
+However, the large OB-to-OB variation in $S_\mathrm{target}$ indicates
+that the mean NIR flux of the system changed significantly between OBs,
+consistent with a semi-active accretion state rather than true quiescence.
+The reference stars showed comparable OB-to-OB scatter, confirming that
+PSF-matching residuals (driven by variable seeing between OBs) contribute
+to the systematics.  This OB-level variability is the dominant noise
+source and sets the floor below which the ellipsoidal signal
+($\Delta K_s \sim 0.1$--$0.2$\,mag in quiescence) cannot be recovered
+without detrending.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Stage 7 -- Phase-Folded Lightcurve}
+
+\subsection{Method}
+The 234-frame $S_\mathrm{target}$ time series was processed into a
+phase-folded lightcurve via the following steps:
+
+\begin{enumerate}
+  \item \textbf{Per-OB sigma clipping} -- Frames deviating by more than
+        $3\sigma$ from their OB median $S_\mathrm{target}$ were rejected
+        (removes cosmic-ray hits and tracking failures within an OB).
+
+  \item \textbf{Per-OB detrending} -- The mean $S_\mathrm{target}$ of each
+        OB was subtracted.  This removes the OB-to-OB flux offsets
+        (accretion variability, photometric zero-point drift) while
+        preserving intra-OB variability.  Each OB spans $\sim$52\,min
+        $\ll P = 1.7587$\,d, so the ellipsoidal slope within a single OB
+        is negligible.
+
+  \item \textbf{Normalisation} -- The detrended series was divided by its
+        global standard deviation to give dimensionless units.
+
+  \item \textbf{Phase folding} -- Orbital phases were computed using the
+        Heida+2017 ephemeris and the data binned into 20 equal phase
+        intervals (minimum 3 points per bin required for a bin to be plotted).
+\end{enumerate}
+
+\subsection{Results}
+
+\begin{resultbox}
+234 frames, 9 OBs, 66.8-day baseline ($\approx 38$ orbital periods).\\[3pt]
+Phase coverage: $\phi \approx 0.28$--$0.94$; inferior conjunction region
+($\phi \lesssim 0.28$) \textbf{not sampled}.\\[3pt]
+All binned means consistent with zero within uncertainties.\\
+\textbf{No significant ellipsoidal modulation detected.}\\[3pt]
+Frame-to-frame scatter: $\sigma(S_\mathrm{detrended}) = 1.0$ (by construction);
+individual frames span $-3.5$ to $+3.2$ normalised units.
+\end{resultbox}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/difference/lightcurve/lc01_raw_vs_mjd.png}
+  \caption{Raw ZOGY matched-filter statistic $S_\mathrm{target}$ vs MJD for
+           all 234 good frames, coloured by OB.  Dashed horizontal lines
+           show the per-OB mean.  The large OB-to-OB variation (means
+           spanning $-4\times10^8$ to $+1.3\times10^9$ units) reflects
+           variable accretion activity across the 66.8-day campaign; this
+           long-term trend must be removed before phase-folding.}
+  \label{fig:lc_raw}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/difference/lightcurve/lc02_reference_stars.png}
+  \caption{ZOGY $S$ statistic for 8 non-variable reference stars
+           ($K_s = 9.5$--$11.7$\,mag) vs MJD.  Non-variable sources
+           should produce $S \approx 0$ in all frames; the observed
+           OB-to-OB scatter (amplitude $\sim 10^9$ units) matches that
+           of the GX~339-4 target, confirming the noise is dominated by
+           PSF-matching systematics common to all sources in the field,
+           not by astrophysical variability in the target itself.}
+  \label{fig:ref_stars}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/difference/lightcurve/lc03_detrended_vs_mjd.png}
+  \caption{Detrended differential $S$ statistic vs MJD after subtracting
+           the per-OB mean.  The long-term trend has been removed and the
+           residuals are centred on zero within each OB.  The remaining
+           scatter ($\sigma \approx 1$ after normalisation) represents the
+           intra-OB variability from which the phase-folded ellipsoidal
+           signal must be extracted.}
+  \label{fig:lc_detrended}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/difference/lightcurve/lc05_phase_folded_paper.png}
+  \caption{Phase-folded Ks-band differential lightcurve of GX~339-4
+           on the Heida+2017 ephemeris ($P = 1.7587$\,d).  Individual
+           frames are coloured by OB; black points with error bars are
+           binned means ($\pm$ standard error, 20 bins).  Blue dotted
+           lines: inferior/superior conjunction; red dotted lines:
+           quadrature.}
+  \label{fig:lc}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{C:/Astronomy/GX 339-4/GX 339-4 Output/difference/lightcurve/lc06_ob_means_vs_phase.png}
+  \caption{\textit{Left:} per-OB mean $S_\mathrm{target}$ vs MJD, showing
+           the long-term rising trend from OB\,1 to OB\,9 (a factor
+           $\sim$4 increase over 67\,days), indicative of growing accretion
+           activity rather than a stable quiescent baseline.
+           \textit{Right:} the same nine OB means phase-folded on the
+           Heida+2017 ephemeris.  No coherent ellipsoidal pattern is
+           visible; the dominant signal is the long-term trend that was
+           removed during per-OB detrending.}
+  \label{fig:ob_means}
+\end{figure}
+
+\subsection{Interpretation}
+The non-detection of an ellipsoidal signal is not unexpected given the
+evidence that the system was not in deep quiescence during this campaign.
+Three compounding factors explain the result:
+
+\begin{enumerate}
+  \item \textbf{Accretion variability.}  The large OB-to-OB $S_\mathrm{target}$
+        variation ($\sigma \sim 8 \times 10^8$ units) indicates that the
+        accretion disc was contributing variable flux at a level that
+        exceeds the expected ellipsoidal amplitude.  The detrending removes
+        this inter-OB variability but also removes any long-term ellipsoidal
+        signal that may be present.
+
+  \item \textbf{Incomplete phase coverage.}  The inferior conjunction region
+        ($\phi \lesssim 0.28$) is entirely absent.  A two-minimum ellipsoidal
+        curve requires sampling both $\phi \approx 0$ and $\phi \approx 0.5$
+        to anchor the minimum flux level.  Without $\phi \sim 0$, the
+        amplitude cannot be measured even if the signal is present.
+
+  \item \textbf{PSF systematics.}  Residual PSF-matching errors between OBs
+        (driven by seeing changes from $0.42''$ to $1.03''$) create
+        correlated noise in $S$ that mimics astrophysical variability and
+        increases the scatter within each phase bin.
+\end{enumerate}
+
+The pipeline itself is validated: the reference stars show the same noise
+level as the target, confirming that the subtraction is working correctly
+and the scatter is not from instrumental artefacts specific to the target
+position.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Summary and Next Steps}
+
+\subsection{What Was Achieved}
+
+A full end-to-end Ks-band reduction pipeline was developed and applied to
+9 quiescent HAWK-I observing blocks (234 frames, 66.8-day baseline).  Key
+milestones:
+
+\begin{itemize}
+  \item Built a complete calibration pipeline (dark, flat, BPM,
+        calibration, alignment) for HAWK-I chip\,1 data.
+  \item Identified an X-ray outburst in OBs~10--12 via Swift BAT,
+        preventing contaminated data from entering the photometric analysis.
+  \item Demonstrated that aperture photometry is insufficient for GX~339-4
+        due to field crowding, motivating the ZOGY approach.
+  \item Implemented ZOGY difference imaging with per-frame PSF modelling,
+        2MASS flux calibration, and matched-filter detection statistics.
+  \item Produced a phase-folded differential lightcurve using 234
+        per-frame measurements across 9 OBs.
+\end{itemize}
+
+\subsection{Why No Ellipsoidal Signal Was Detected}
+
+The dominant obstacle is accretion activity: even the ``quiescent'' OBs~1--9
+show OB-to-OB flux variation at a level inconsistent with a system in deep
+quiescence.  The per-OB detrending necessary to remove this variability
+destroys any ellipsoidal signal that is coherent across the full
+66.8-day baseline.
+
+\subsection{Required for a Successful Ellipsoidal Detection}
+
+\begin{enumerate}
+  \item \textbf{True quiescence} -- Observations during a confirmed X-ray
+        quiescent state (BAT rate $< 2\sigma$ above baseline for $\geq 1$
+        month before observations), where the donor dominates the NIR flux.
+  \item \textbf{Complete phase coverage} -- OBs that sample $\phi \approx
+        0.0$--$0.3$ (currently entirely missing).
+  \item \textbf{Higher cadence within OBs} -- Longer OBs ($\sim$3--4\,hr)
+        would allow intra-OB phase coverage of $\Delta\phi \sim 0.1$,
+        making the ellipsoidal slope measurable within a single night.
+\end{enumerate}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{thebibliography}{9}
+
+\bibitem{Heida2017}
+  Heida M. et al., 2017, ApJ, 846, 132.
+
+\bibitem{Markert1973}
+  Markert T.~H. et al., 1973, ApJ, 184, L67.
+
+\bibitem{Zackay2016}
+  Zackay B., Ofek E.~O., Gal-Yam A., 2016, ApJ, 830, 27.
+
+\end{thebibliography}
+
+\end{document}

@@ -24,7 +24,7 @@ FLATS_DIT_1p68  = FLAT_GROUPS_DIR / "DIT_1p676206"   # Used for master flat
 FLATS_DIT_3p5   = FLAT_GROUPS_DIR / "DIT_3p5"
 
 # ─── Output directories ───────────────────────────────────────────────────────
-OUTPUT_ROOT      = Path(r"C:\Astronomy\GX 339-4 Output")
+OUTPUT_ROOT      = Path(r"C:\Astronomy\GX 339-4\GX 339-4 Output")
 MASTERS_DIR      = OUTPUT_ROOT / "masters"        # Master dark, flat, pixel mask
 CALIBRATED_DIR   = OUTPUT_ROOT / "calibrated"     # Calibrated science frames (per-OB subfolders)
 ALIGNED_DIR      = OUTPUT_ROOT / "aligned"        # Aligned calibrated frames

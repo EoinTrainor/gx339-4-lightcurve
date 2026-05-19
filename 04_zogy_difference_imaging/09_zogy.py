@@ -5,7 +5,7 @@ Stage 9: ZOGY proper image subtraction for GX 339-4 HAWK-I Ks-band data.
 
 Phase 1  — Proper coaddition reference (Zackay & Ofek 2015b / ZOGY Eq. 22–24)
            All quiescent aligned frames (OBs 1–10).  Per-frame: PSF from 2D
-           Gaussian fit to isolated stars, σ from sigma-clipped background RMS,
+           Moffat fit to isolated stars, σ from sigma-clipped background RMS,
            F from 2MASS Ks catalogue matching.  Accumulate in Fourier space.
 
 Phase 2  — ZOGY per-frame subtraction (Zackay, Ofek & Gal-Yam 2016, Eq. 13–17)
@@ -166,14 +166,15 @@ def extract_sources(data, detect_sigma=5.0):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 3. PSF ESTIMATION — 2D GAUSSIAN FIT ON ISOLATED STARS
+# 3. PSF ESTIMATION — 2D MOFFAT FIT ON ISOLATED STARS
 # ══════════════════════════════════════════════════════════════════════════════
-def fit_psf_gaussian(data, objects, stamp_size=51, max_stars=30,
-                     isolation_fwhm=6):
+def fit_psf_moffat(data, objects, stamp_size=51, max_stars=30,
+                   isolation_fwhm=6):
     """
-    Fit 2D Gaussian to isolated bright stars.
+    Fit 2D Moffat to isolated bright stars.
     Returns (psf_stamp normalised to sum=1, fwhm_x_px, fwhm_y_px).
     Returns (None, nan, nan) if fewer than 3 usable stars found.
+    Moffat f(r) = A*(1 + r²/γ²)^(-α) captures PSF wings better than Gaussian.
     """
     if len(objects) == 0:
         return None, np.nan, np.nan
@@ -218,6 +219,10 @@ def fit_psf_gaussian(data, objects, stamp_size=51, max_stars=30,
     yy, xx = np.mgrid[0:stamp_size, 0:stamp_size]
     stamps, fwhms_x, fwhms_y = [], [], []
 
+    # Initial gamma from fwhm_est assuming alpha=3.5 (typical seeing)
+    alpha_init = 3.5
+    gamma_init = fwhm_est / (2.0 * np.sqrt(2.0**(1.0 / alpha_init) - 1.0))
+
     for obj in objs:
         cx = int(round(obj["x"]))
         cy = int(round(obj["y"]))
@@ -232,40 +237,39 @@ def fit_psf_gaussian(data, objects, stamp_size=51, max_stars=30,
         if peak <= 0:
             continue
 
-        g_init = models.Gaussian2D(
+        m_init = models.Moffat2D(
             amplitude=peak,
-            x_mean=half, y_mean=half,
-            x_stddev=fwhm_est / 2.355,
-            y_stddev=fwhm_est / 2.355,
+            x_0=half, y_0=half,
+            gamma=gamma_init,
+            alpha=alpha_init,
             bounds={
-                "x_mean":   (half - 3, half + 3),
-                "y_mean":   (half - 3, half + 3),
-                "x_stddev": (0.5, stamp_size / 3.0),
-                "y_stddev": (0.5, stamp_size / 3.0),
+                "x_0":   (half - 3, half + 3),
+                "y_0":   (half - 3, half + 3),
+                "gamma": (0.3, stamp_size / 2.0),
+                "alpha": (1.0, 8.0),
             }
         )
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            g = fitter(g_init, xx, yy, cutout)
+            m = fitter(m_init, xx, yy, cutout)
 
-        fx = 2.355 * g.x_stddev.value
-        fy = 2.355 * g.y_stddev.value
-        if not (1.0 < fx < stamp_size / 2 and 1.0 < fy < stamp_size / 2):
+        fwhm_px = m.fwhm  # 2*gamma*sqrt(2^(1/alpha) - 1)
+        if not (1.0 < fwhm_px < stamp_size / 2):
             continue
 
         # Force PSF centre to (half, half) before evaluating the stamp.
         # The fit may land up to ±3 px off-centre; evaluating there embeds a
         # sub-pixel phase ramp in P̂ that shifts the PSF convolution and
         # prevents exact source cancellation in the ZOGY difference.
-        g.x_mean = half
-        g.y_mean = half
-        stamp = g(xx, yy)
+        m.x_0 = half
+        m.y_0 = half
+        stamp = m(xx, yy)
         s     = stamp.sum()
         if s <= 0:
             continue
         stamps.append(stamp / s)
-        fwhms_x.append(fx)
-        fwhms_y.append(fy)
+        fwhms_x.append(fwhm_px)
+        fwhms_y.append(fwhm_px)
 
     if len(stamps) < 3:
         return None, np.nan, np.nan
@@ -476,7 +480,7 @@ def characterise_frame(data, cat, ref_wcs):
     objects, _  = extract_sources(data, detect_sigma=DETECT_SIGMA)
     sigma_j     = estimate_sigma(data)
 
-    psf_stamp, fwhm_x, fwhm_y = fit_psf_gaussian(
+    psf_stamp, fwhm_x, fwhm_y = fit_psf_moffat(
         data, objects,
         stamp_size=PSF_STAMP_SIZE,
         max_stars=MAX_PSF_STARS,
@@ -484,12 +488,13 @@ def characterise_frame(data, cat, ref_wcs):
     )
 
     if psf_stamp is None:
-        # Analytic fallback: symmetric Gaussian at 4 px FWHM
-        fwhm_px  = 4.0
-        sigma_px = fwhm_px / 2.355
-        half     = PSF_STAMP_SIZE // 2
-        yy, xx   = np.mgrid[-half:half + 1, -half:half + 1]
-        psf_stamp = np.exp(-(xx**2 + yy**2) / (2 * sigma_px**2))
+        # Analytic fallback: symmetric Moffat at 4 px FWHM, alpha=3.5
+        fwhm_px   = 4.0
+        alpha_fb  = 3.5
+        gamma_fb  = fwhm_px / (2.0 * np.sqrt(2.0**(1.0 / alpha_fb) - 1.0))
+        half      = PSF_STAMP_SIZE // 2
+        yy, xx    = np.mgrid[-half:half + 1, -half:half + 1]
+        psf_stamp = (1.0 + (xx**2 + yy**2) / gamma_fb**2)**(-alpha_fb)
         psf_stamp /= psf_stamp.sum()
         fwhm_x = fwhm_y = fwhm_px
         n_stars = 0
