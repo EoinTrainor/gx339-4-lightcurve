@@ -65,7 +65,7 @@ Of the 12 OBs, the final 2 were obtained during a GX 339-4 outburst and are **ex
 |-----|--------|-------------------------------|-------------------------|
 | 1 – 9 | Quiescent | ✅ Yes | ✅ Yes |
 | 10 | Suspected non-quiescent | ✅ Yes (science frames) | ❌ No — excluded from reference coadd |
-| 11 – 12 | Outburst (Swift/BAT confirmed) | ❌ No — excluded per supervisor guidance | ❌ No |
+| 11 – 12 | Outburst (Swift/BAT confirmed) | ❌ No — excluded because of accretion disc activity | ❌ No |
 
 During outburst, accretion disc and jet emission contribute significantly to the NIR flux, diluting the donor star's ellipsoidal modulation signal and rendering the mass function derivation unreliable. The X-ray classification and OB epoch cross-match are documented in `06_xray_analysis/outburst/`.
 
